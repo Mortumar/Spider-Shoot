@@ -5,20 +5,30 @@ using UnityEngine.AI;
 
 public class EnemyAI : MonoBehaviour
 {
-    [SerializeField] Transform target;
+    
     [SerializeField] float chaseRange = 5f;
     [SerializeField] float turnSpeed = 5f;
 
     NavMeshAgent navMeshAgent;
     float distanceToTarget = Mathf.Infinity;
     bool isProvoked = false;
-    
+
+    EnemyHealth health;
+    Transform target;
+
     void Start()
     {
         navMeshAgent = GetComponent<NavMeshAgent>();
+        health = GetComponent<EnemyHealth>();
+        target = FindObjectOfType<PlayerHealth>().transform;
     }
     void Update()
     {
+        if (health.IsDead())
+        {
+           enabled = false;
+           navMeshAgent.enabled = false;
+        }
         distanceToTarget = Vector3.Distance(target.position, transform.position);
         if (isProvoked)
         {
@@ -29,6 +39,12 @@ public class EnemyAI : MonoBehaviour
             isProvoked = true;
         }
     }
+    
+    public void OnDamageTaken()
+    {
+        isProvoked = true;
+    }
+
     private void EngageTarget()
     {
         FaceTarget();
@@ -45,9 +61,14 @@ public class EnemyAI : MonoBehaviour
 
     void ChaseTarget()
     {
-        GetComponent<Animator>().SetBool("attack", false);
-        GetComponent<Animator>().SetTrigger("walk");
-        navMeshAgent.SetDestination(target.position);
+        if (navMeshAgent.enabled == true)
+        {
+            GetComponent<Animator>().SetBool("attack", false);
+            GetComponent<Animator>().SetTrigger("walk");
+            navMeshAgent.SetDestination(target.position);
+        }
+        else
+            return;
     }
     void AttackTarget()
     {
